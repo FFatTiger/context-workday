@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Context · 工作日镜</title>
+<style>
+:root{
+  --bg:#F4F4F1; --surface:#FFFFFF; --sunken:#FAFAF8;
+  --ink:#17171A; --ink-2:#5E5E66; --ink-3:#9A9AA2;
+  --line:#E6E6E0; --line-2:#EFEFEA;
+  --accent:#2F5BEA; --accent-soft:#EEF2FE;
+  --warn:#C77A0A; --warn-soft:#FDF5E7;
+  --bad:#D23F31; --bad-soft:#FDEEEC;
+  --ok:#1F9D57; --ok-soft:#EAF7EF;
+  --im:#2F5BEA; --cal:#E07B22; --mail:#1F9D57;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.55 "Noto Sans CJK SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-variant-numeric:tabular-nums;min-width:1280px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.num{font-feature-settings:"tnum"}
+
+/* top bar */
+.top{height:60px;display:flex;align-items:center;gap:32px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px}
+.brand i{width:22px;height:22px;border-radius:7px;background:var(--ink);position:relative;display:block}
+.brand i:after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid #fff;border-right-color:transparent}
+.brand small{font-weight:400;color:var(--ink-3);font-size:12px;margin-left:2px}
+.tabs{display:flex;gap:4px}
+.tabs button{padding:7px 14px;border-radius:9px;color:var(--ink-2)}
+.tabs button:hover{background:var(--bg)}
+.tabs button.on{background:var(--ink);color:#fff}
+.top .sp{flex:1}
+.search{width:240px;height:34px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;padding:0 12px;color:var(--ink-3);gap:8px;background:var(--sunken)}
+.search kbd{margin-left:auto;font:11px/1 inherit;border:1px solid var(--line);border-radius:5px;padding:3px 5px;background:#fff}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);padding:5px 10px;border-radius:99px;background:var(--bg)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+
+.page{padding:28px 32px 48px;max-width:1520px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+
+/* today header */
+.dayhead{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px}
+.dayhead h1{font-size:34px;line-height:1;font-weight:700;letter-spacing:-.5px}
+.dayhead h1 span{font-weight:400;color:var(--ink-3);font-size:22px;margin-left:8px}
+.navbtn{width:32px;height:32px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink-2)}
+.dayhead .meta{margin-left:auto;display:flex;gap:8px}
+
+/* hour strip */
+.strip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px 12px;margin-bottom:20px}
+.strip-top{display:flex;justify-content:space-between;color:var(--ink-2);font-size:12px;margin-bottom:10px}
+.strip-top b{color:var(--ink);font-weight:600}
+.bars{display:grid;grid-template-columns:repeat(15,1fr);gap:6px;align-items:end;height:36px}
+.bars div{border-radius:5px;background:var(--line-2);height:6px;position:relative}
+.bars div.h{background:linear-gradient(180deg,#3B4252,#22262F)}
+.bars div.now{background:none;border:1.5px dashed var(--accent);height:36px}
+.hours{display:grid;grid-template-columns:repeat(15,1fr);gap:6px;margin-top:6px;font-size:11px;color:var(--ink-3);text-align:center}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:20px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line-2)}
+.card-h h2{font-size:15px;font-weight:600}
+.card-h .sub{color:var(--ink-3);font-size:12px}
+.card-h .r{margin-left:auto}
+
+/* timeline */
+.tl{padding:8px 20px 20px}
+.hr{display:grid;grid-template-columns:64px 1fr;gap:0;position:relative}
+.hr .t{font-size:13px;font-weight:600;padding-top:16px;color:var(--ink)}
+.hr .t small{display:block;font-weight:400;font-size:11px;color:var(--ink-3)}
+.hr .b{border-left:1px solid var(--line);padding:12px 0 12px 20px;position:relative}
+.hr .b:before{content:"";position:absolute;left:-4.5px;top:22px;width:8px;height:8px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+.entry{border-radius:11px;padding:10px 14px;background:var(--sunken);border:1px solid var(--line-2);display:flex;flex-direction:column;gap:6px}
+.entry.sel{border-color:var(--accent);background:var(--accent-soft)}
+.it{display:flex;align-items:flex-start;gap:10px;cursor:pointer;border-radius:7px;padding:3px 4px;margin:-3px -4px}
+.it:hover{background:rgba(47,91,234,.06)}
+.it .txt{flex:1}
+.src{width:3px;align-self:stretch;border-radius:3px;background:var(--im);flex:none;margin:3px 0}
+.src.cal{background:var(--cal)}.src.mail{background:var(--mail)}
+.chips{display:flex;gap:5px;flex:none}
+.chip{font-size:11.5px;line-height:1;padding:5px 7px;border-radius:6px;background:#fff;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.chip.ev{color:var(--accent);border-color:#D6DFFB;background:var(--accent-soft)}
+.chip.deg{color:var(--warn);border:1px dashed #E9C58A;background:var(--warn-soft)}
+.badge{white-space:nowrap;display:inline-block;margin-top:3px;font-size:10.5px;padding:3px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);font-weight:500}
+.gap{display:grid;grid-template-columns:64px 1fr}
+.gap .b{border-left:1px dashed var(--line);padding:6px 0 6px 20px;color:var(--ink-3);font-size:12px}
+.gap .b span{display:inline-block;padding:2px 0;background:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 8px) bottom/100% 1px no-repeat}
+.nowrow{display:grid;grid-template-columns:64px 1fr;margin-top:6px}
+.nowrow .t{color:var(--accent);font-weight:700;font-size:13px}
+.nowrow .b{border-top:2px solid var(--accent);position:relative;padding-top:6px;color:var(--ink-3);font-size:12px;margin-top:9px}
+.nowrow .b:before{content:"";position:absolute;left:-6px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(47,91,234,.15)}
+.gen{font-size:11px;color:var(--ink-3)}
+
+/* summary ladder */
+.ladder{display:flex;flex-direction:column;gap:14px;position:sticky;top:80px}
+.sum .card-h{padding:14px 18px}
+.sum .lvl{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink-3);text-transform:uppercase}
+.sum h3{font-size:16px;font-weight:700}
+.ver{font-size:11.5px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2)}
+.ver b{color:var(--ink)}
+.sum ul{list-style:none;padding:8px 18px 4px}
+.sum li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;cursor:pointer;border-bottom:1px solid var(--line-2)}
+.sum li:last-child{border:0}
+.sum li:hover .txt{color:var(--accent)}
+.sum li .txt{flex:1}
+.sum li:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-3);margin-top:9px;flex:none}
+.sum .f{padding:10px 18px 14px;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between}
+.sum .f a{color:var(--accent);text-decoration:none}
+.sum.today{border-color:var(--ink);box-shadow:0 1px 0 var(--ink)}
+
+/* drawer */
+.mask{position:fixed;inset:0;background:rgba(20,20,24,.28);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:600px;background:var(--surface);border-left:1px solid var(--line);box-shadow:-20px 0 60px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .24s cubic-bezier(.2,.8,.2,1);z-index:21;display:flex;flex-direction:column}
+body.dr .mask{opacity:1;pointer-events:auto}body.dr .drawer{transform:none}
+.dr-h{padding:20px 24px 16px;border-bottom:1px solid var(--line-2)}
+.dr-h .x{float:right;width:30px;height:30px;border-radius:8px;color:var(--ink-3);font-size:18px}
+.dr-h .x:hover{background:var(--bg)}
+.dr-h .where{font-size:12px;color:var(--ink-3)}
+.dr-h h2{font-size:22px;line-height:1.35;margin:6px 0 12px;font-weight:700}
+.path{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-3)}
+.path span{padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink-2)}
+.path span.on{background:var(--ink);color:#fff}
+.dr-b{padding:18px 24px;overflow:auto;flex:1}
+.stat{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-bottom:18px}
+.stat b{color:var(--ink);font-size:15px;margin-right:3px}.stat .w b{color:var(--warn)}
+.node{border-left:2px solid var(--line);padding:0 0 18px 18px;position:relative}
+.node:before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--ink)}
+.node .d{font-size:12px;color:var(--ink-3)}
+.node .d b{color:var(--ink);font-size:13px;margin-right:6px}
+.node .s{font-weight:600;margin:2px 0 10px}
+.sub-node{margin-left:2px;padding:10px 12px;border-radius:10px;background:var(--sunken);border:1px solid var(--line-2)}
+.sub-node .lab{font-size:12px;color:var(--ink-3);margin-bottom:8px}
+.msg{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line-2)}
+.msg:first-of-type{border-top:0}
+.av{width:26px;height:26px;border-radius:8px;flex:none;display:grid;place-items:center;font-size:12px;font-weight:600;color:#fff;background:#7C8AA5}
+.av.me{background:var(--ink)}
+.msg .who{font-size:12px;color:var(--ink-3)}
+.msg .who b{color:var(--ink);font-weight:600;margin-right:6px}
+.tag{font-size:11px;color:var(--accent);margin-left:auto;align-self:flex-start}
+.lost{border:1px dashed #E3B567;background:var(--warn-soft);border-radius:10px;padding:12px 14px}
+.lost .h{color:var(--warn);font-weight:600;font-size:12.5px;margin-bottom:6px}
+.lost .m{font-size:12px;color:#9B7A45;margin-top:6px}
+.mail{display:flex;gap:10px;align-items:center}
+.mail .ic{width:30px;height:30px;border-radius:8px;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:14px}
+.dr-f{padding:14px 24px;border-top:1px solid var(--line-2);display:flex;gap:10px}
+.btn{height:34px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:#fff;font-weight:500}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* review */
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{padding:5px 14px;border-radius:7px;color:var(--ink-2)}
+.seg button.on{background:var(--ink);color:#fff}
+.rv-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+.rv-items{list-style:none;padding:6px 20px 10px}
+.rv-items li{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line-2)}
+.rv-items li:last-child{border:0}
+.rv-items .n{width:22px;color:var(--ink-3);font-size:12px;padding-top:2px}
+.rv-items .txt{flex:1;font-size:15px}
+.op{font-size:11px;padding:3px 7px;border-radius:6px;font-weight:600}
+.op.add{background:var(--ok-soft);color:var(--ok)}.op.mod{background:var(--accent-soft);color:var(--accent)}
+del{color:var(--ink-3)}ins{text-decoration:none;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 3px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:16px 20px 20px}
+.day{border:1px solid var(--line);border-radius:11px;padding:10px 12px;min-height:104px;font-size:12.5px;color:var(--ink-2);background:var(--sunken)}
+.day b{display:block;color:var(--ink);font-size:13px;margin-bottom:6px}
+.day.cur{border-color:var(--ink);background:#fff;box-shadow:0 1px 0 var(--ink)}
+.day.fut{border-style:dashed;background:none;color:var(--ink-3)}
+.vers{padding:6px 20px 12px}
+.v{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-2);cursor:pointer}
+.v:last-child{border:0}
+.v .vn{font-weight:700;font-size:13px;width:34px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--bg)}
+.v.on .vn{background:var(--ink);color:#fff}
+.v .vm{font-size:12px;color:var(--ink-3)}.v .vc{font-size:12.5px;color:var(--ink-2)}
+.diff{margin:0 20px 20px;border-radius:11px;background:var(--sunken);border:1px solid var(--line-2);padding:12px 14px;font-size:13px}
+.diff p{padding:5px 0}.diff .p{color:var(--ok);font-weight:700;margin-right:6px}.diff .m{color:var(--accent);font-weight:700;margin-right:6px}
+
+/* backup */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.kpi{padding:18px 20px}
+.kpi .k{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:13px}
+.kpi .big{font-size:34px;font-weight:700;letter-spacing:-1px;margin:8px 0 2px}
+.kpi .big small{font-size:14px;font-weight:400;color:var(--ink-3);margin-left:4px;letter-spacing:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;margin-top:10px}
+.kv dt{color:var(--ink-3)}.kv dd{color:var(--ink)}
+.ok-pill{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:99px;background:var(--ok-soft);color:var(--ok);font-weight:600}
+.cov{padding:18px 20px}
+.cells{display:grid;grid-template-columns:repeat(60,1fr);gap:3px;margin:14px 0 8px}
+.cells i{height:26px;border-radius:4px;background:var(--ok);opacity:.85}
+.cells i.x{background:var(--bad);opacity:1}
+.cells i.w{outline:2px solid var(--ink);outline-offset:1px}
+.cov-l{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-left:auto}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.warnline{margin-top:12px;font-size:12.5px;color:var(--warn);background:var(--warn-soft);padding:8px 12px;border-radius:9px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--ink-3);font-size:12px;padding:10px 20px;border-bottom:1px solid var(--line-2)}
+td{padding:11px 20px;border-bottom:1px solid var(--line-2)}
+tr:last-child td{border:0}
+.s-ok{color:var(--ok)}.s-bad{color:var(--bad)}
+
+/* tasks */
+.ruler{padding:22px 24px 26px}
+.rl{position:relative;height:84px;margin-top:8px}
+.rl .axis{position:absolute;left:0;right:0;top:46px;height:1px;background:var(--line)}
+.rl .tick{position:absolute;top:42px;height:9px;width:1px;background:var(--ink-3)}
+.rl .tl2{position:absolute;top:58px;font-size:11px;color:var(--ink-3);transform:translateX(-50%)}
+.rl .ev{position:absolute;top:0;transform:translateX(-50%);font-size:12px;text-align:center;white-space:nowrap}
+.rl .ev:after{content:"";display:block;width:10px;height:10px;border-radius:50%;margin:6px auto 0;background:var(--ink)}
+.rl .ev.a:after{background:var(--accent)}
+.rl .hs{position:absolute;top:44px;width:5px;height:5px;border-radius:50%;background:var(--ink-3);transform:translateX(-50%)}
+.rl .nowl{position:absolute;top:38px;bottom:0;width:2px;background:var(--accent)}
+.jobs td:nth-child(2){font-weight:600}
+.sched{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sunken)}
+.sw{width:34px;height:20px;border-radius:99px;background:var(--ink);position:relative;display:inline-block;vertical-align:middle}
+.sw:after{content:"";position:absolute;right:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.run{color:var(--accent);font-weight:500}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i></i>Context<small>工作日镜</small></div>
+  <nav class="tabs">
+    <button class="on" data-v="today">今天</button><button data-v="review">回顾</button><button>搜索</button><button data-v="backup">备份</button><button data-v="tasks">任务</button><button>设置</button>
+  </nav>
+  <div class="sp"></div>
+  <span class="pill"><span class="dot"></span>IM 备份 今天 02:00</span>
+  <div class="search">⌕ 搜索原文和摘要<kbd>⌘K</kbd></div>
+</header>
+
+<main class="page">
+<!-- TODAY -->
+<section class="view on" id="today">
+  <div class="dayhead">
+    <h1>10月29日<span>周四</span></h1>
+    <button class="navbtn">‹</button><button class="navbtn">›</button>
+    <div class="meta"><span class="pill">日结 20:30 已生成</span><span class="pill">1,284 条消息 · 与我有关 86 条</span></div>
+  </div>
+
+  <div class="strip">
+    <div class="strip-top"><span><b>7 个小时</b>有记录</span><span>08 – 22 时</span></div>
+    <div class="bars">
+      <div></div><div class="h" style="height:34px"></div><div class="h" style="height:26px"></div><div class="h" style="height:30px"></div><div></div><div></div><div class="h" style="height:16px"></div><div class="h" style="height:42px"></div><div class="h" style="height:12px"></div><div></div><div class="h" style="height:14px"></div><div></div><div class="now"></div><div></div><div></div>
+    </div>
+    <div class="hours"><span>08</span><span>09</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-h"><h2>时间线</h2><span class="sub">只显示有记录的小时</span>
+        <span class="r sub"><span style="color:var(--im)">▍</span>IM&nbsp;&nbsp;<span style="color:var(--cal)">▍</span>日程&nbsp;&nbsp;<span style="color:var(--mail)">▍</span>邮件</span></div>
+      <div class="tl">
+        <div class="hr"><div class="t">09:00<small>10:05 生成</small></div><div class="b"><div class="entry sel">
+          <div class="it" data-d><span class="src"></span><span class="txt">【核心迁移】项目群确认切换窗口改到 11月8日 凌晨 2:00</span><span class="chips"><span class="chip ev">原文 9</span></span></div>
+          <div class="it" data-d><span class="src"></span><span class="txt">回复赵磊：大促期间不做切换</span><span class="chips"><span class="chip ev">原文 3</span></span></div>
+        </div></div></div>
+        <div class="hr"><div class="t">10:00<small>11:05 生成</small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src cal"></span><span class="txt">迁移方案评审会：评审通过，回滚方案补齐后签字</span><span class="chips"><span class="chip">日程 1</span><span class="chip ev">原文 6</span></span></div>
+        </div></div></div>
+        <div class="hr"><div class="t">11:00<small>12:05 生成</small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src"></span><span class="txt">智能客服灰度从 5% 提到 20%，周一看指标</span><span class="chips"><span class="chip ev">原文 11</span></span></div>
+        </div></div></div>
+        <div class="gap"><div></div><div class="b"><span>12:00 – 14:00 · 无与我有关的消息</span></div></div>
+        <div class="hr"><div class="t">14:00<small>15:05 生成</small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src"></span><span class="txt">与陈工确认回滚方案周五前补齐</span><span class="chips"><span class="chip ev">原文 5</span></span></div>
+        </div></div></div>
+        <div class="hr"><div class="t">15:00<small><span class="badge">v2 · 手动重跑</span></small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src"></span><span class="txt">数据中台周会：Q4 非核心项先砍 15%</span><span class="chips"><span class="chip ev">原文 14</span></span></div>
+          <div class="it" data-d><span class="src"></span><span class="txt">李敏问预算表用哪一版口径，还没回复</span><span class="chips"><span class="chip ev">原文 2</span></span></div>
+        </div></div></div>
+        <div class="hr"><div class="t">16:00<small>17:05 生成</small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src mail"></span><span class="txt">收到《数据安全整改通知》，周五前反馈自查结果</span><span class="chips"><span class="chip">邮件 1</span></span></div>
+        </div></div></div>
+        <div class="gap"><div></div><div class="b"><span>17:00 · 无记录</span></div></div>
+        <div class="hr"><div class="t">18:00<small>19:05 生成</small></div><div class="b"><div class="entry">
+          <div class="it" data-d><span class="src"></span><span class="txt">整理切换演练排期草稿</span><span class="chips"><span class="chip ev">原文 4</span></span></div>
+        </div></div></div>
+        <div class="nowrow"><div class="t">20:36</div><div class="b">下次小时摘要 21:05</div></div>
+      </div>
+    </div>
+
+    <aside class="ladder">
+      <div class="card sum today">
+        <div class="card-h"><div><div class="lvl">日</div><h3>今天</h3></div><span class="ver r"><b>v1</b> · 20:30</span></div>
+        <ul>
+          <li data-d><span class="txt">核心系统迁移切换窗口定为 11月8日，评审通过</span><span class="chip ev">证据 2</span></li>
+          <li data-d><span class="txt">智能客服灰度提到 20%，周一看指标</span><span class="chip ev">证据 1</span></li>
+          <li data-d><span class="txt">李敏的预算口径问题还没回复</span><span class="chip ev">证据 1</span></li>
+        </ul>
+        <div class="f"><span>依据 7 个小时摘要</span><a href="#">版本 ›</a></div>
+      </div>
+      <div class="card sum">
+        <div class="card-h"><div><div class="lvl">周 · 10/26 – 10/29</div><h3>本周至今</h3></div><span class="ver r"><b>v4</b> · 增量</span></div>
+        <ul>
+          <li data-d><span class="txt">核心系统迁移：评审通过，切换窗口定为 11月8日</span><span class="chip ev">证据 3</span></li>
+          <li data-d><span class="txt">智能客服灰度从 5% 提到 20%</span><span class="chip ev">证据 2</span></li>
+          <li data-d><span class="txt">Q4 预算：非核心项先砍 15%，口径待确认</span><span class="chip ev">证据 2</span></li>
+        </ul>
+        <div class="f"><span>依据 4 份日结</span><a href="#">版本 ›</a></div>
+      </div>
+      <div class="card sum">
+        <div class="card-h"><div><div class="lvl">月 · 10/1 – 10/29</div><h3>本月至今</h3></div><span class="ver r"><b>v16</b> · 增量</span></div>
+        <ul>
+          <li data-d="m"><span class="txt">完成数据中台指标口径统一</span><span class="chips"><span class="chip ev">证据 3</span><span class="chip deg">降级 1</span></span></li>
+          <li data-d><span class="txt">核心系统迁移方案成型并通过评审</span><span class="chip ev">证据 5</span></li>
+          <li data-d><span class="txt">启动智能客服灰度</span><span class="chip ev">证据 3</span></li>
+        </ul>
+        <div class="f"><span>依据 16 份日结</span><a href="#">版本 ›</a></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- REVIEW -->
+<section class="view" id="review">
+  <div class="dayhead">
+    <h1>第 44 周<span>10月26日 – 11月1日</span></h1>
+    <div class="seg" style="margin-left:16px"><button>小时</button><button>日</button><button class="on">周</button><button>月</button><button>年</button></div>
+    <div class="meta"><span class="pill"><span class="dot" style="background:var(--accent)"></span>进行中 · 截至 10/29</span></div>
+  </div>
+  <div class="rv-grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h2>本周至今</h2><span class="ver"><b>v4</b> · 10/29 20:30</span><span class="sub r">相比 v3：新增 2 · 修改 1</span></div>
+        <ul class="rv-items">
+          <li><span class="n">1</span><span class="txt">核心系统迁移：<del>评审中，切换时间待定</del> <ins>评审通过，切换窗口定为 11月8日 凌晨 2:00</ins></span><span class="op mod">修改</span><span class="chip ev">证据 3</span></li>
+          <li><span class="n">2</span><span class="txt">智能客服灰度从 5% 提到 20%，周一看指标</span><span class="op add">新增</span><span class="chip ev">证据 2</span></li>
+          <li><span class="n">3</span><span class="txt">Q4 预算：非核心项先砍 15%，口径待与财务确认</span><span class="chip ev">证据 2</span></li>
+          <li><span class="n">4</span><span class="txt">数据安全整改：周五前反馈自查结果</span><span class="op add">新增</span><span class="chip ev">证据 1</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>本周日结</h2><span class="sub">周摘要的输入</span></div>
+        <div class="days">
+          <div class="day"><b>周一 10/26</b>提出切换推迟；预算先砍 15%</div>
+          <div class="day"><b>周二 10/27</b>陈工评估回滚约 40 分钟</div>
+          <div class="day"><b>周三 10/28</b>预算口径讨论</div>
+          <div class="day cur"><b>周四 10/29</b>定窗口 11/8；灰度 20%<div style="margin-top:8px"><span class="op mod">已并入 v4</span></div></div>
+          <div class="day fut"><b style="color:inherit">周五 10/30</b>20:30 生成</div>
+          <div class="day fut"><b style="color:inherit">周六</b>—</div>
+          <div class="day fut"><b style="color:inherit">周日</b>—</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>版本</h2><button class="btn r">重新生成</button></div>
+      <div class="vers">
+        <div class="v on"><span class="vn">v4</span><div><div class="vc">并入周四日结 · 新增 2 · 修改 1</div><div class="vm">10/29 20:30 · 定时 · 增量</div></div></div>
+        <div class="v"><span class="vn">v3</span><div><div class="vc">并入周三日结 · 新增 1</div><div class="vm">10/28 20:30 · 定时 · 增量</div></div></div>
+        <div class="v"><span class="vn">v2</span><div><div class="vc">并入周二日结 · 修改 1</div><div class="vm">10/27 20:30 · 定时 · 增量</div></div></div>
+        <div class="v"><span class="vn">v1</span><div><div class="vc">初版 · 3 条</div><div class="vm">10/26 20:30 · 定时</div></div></div>
+      </div>
+      <div class="diff">
+        <p><span class="m">~</span>评审中，切换时间待定 → 评审通过，切换窗口定为 11月8日</p>
+        <p><span class="p">+</span>智能客服灰度从 5% 提到 20%</p>
+        <p><span class="p">+</span>数据安全整改：周五前反馈自查结果</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BACKUP -->
+<section class="view" id="backup">
+  <div class="dayhead"><h1>备份<span>原文只存本机</span></h1><div class="meta"><button class="btn pri">立即备份</button></div></div>
+  <div class="kpis">
+    <div class="card kpi"><div class="k"><span class="src" style="height:14px;align-self:center"></span>IM 消息<span class="ok-pill">正常</span></div><div class="big">55<small>天已备份</small></div>
+      <dl class="kv"><dt>客户端保留</dt><dd>7 天</dd><dt>频率</dt><dd>每天 02:00</dd><dt>上次</dt><dd>今天 02:00 · 新增 1,284 条</dd></dl></div>
+    <div class="card kpi"><div class="k"><span class="src mail" style="height:14px;align-self:center"></span>邮件<span class="ok-pill">正常</span></div><div class="big">412<small>封</small></div>
+      <dl class="kv"><dt>客户端保留</dt><dd>3 个月</dd><dt>频率</dt><dd>每周日 03:00</dd><dt>上次</dt><dd>10/25 · 新增 46 封</dd></dl></div>
+    <div class="card kpi"><div class="k"><span class="src cal" style="height:14px;align-self:center"></span>日程<span class="ok-pill">正常</span></div><div class="big">138<small>场</small></div>
+      <dl class="kv"><dt>频率</dt><dd>每天 02:00</dd><dt>上次</dt><dd>今天 02:00 · 新增 3 场</dd></dl></div>
+  </div>
+  <div class="card cov" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center"><h2 style="font-size:15px">IM 覆盖 · 近 60 天</h2>
+      <div class="legend"><span><i style="background:var(--ok)"></i>已备份</span><span><i style="background:var(--bad)"></i>缺口 · 已过期</span><span><i style="outline:2px solid var(--ink);outline-offset:-2px"></i>7 天可补救窗口</span></div></div>
+    <div class="cells" id="cells"></div>
+    <div class="cov-l"><span>8/31</span><span>10/12 – 10/14 备份失败，原文已过期</span><span>今天</span></div>
+    <div class="warnline">⚠ 缺口影响：18 条摘要的证据已降级为 AI 当时概述　查看 ›</div>
+  </div>
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) 360px">
+    <div class="card"><div class="card-h"><h2>备份记录</h2></div>
+      <table><tr><th>时间</th><th>来源</th><th>结果</th><th>新增</th><th>耗时</th></tr>
+      <tr><td>10/29 02:00</td><td>IM</td><td class="s-ok">成功</td><td>1,284 条</td><td>38 秒</td></tr>
+      <tr><td>10/28 02:00</td><td>IM</td><td class="s-ok">成功</td><td>1,102 条</td><td>35 秒</td></tr>
+      <tr><td>10/25 03:00</td><td>邮件</td><td class="s-ok">成功</td><td>46 封</td><td>2 分 10 秒</td></tr>
+      <tr><td>10/15 02:00</td><td>IM</td><td class="s-bad">失败 · 客户端接口超时</td><td>—</td><td>—</td></tr></table></div>
+    <div class="card kpi"><div class="k">存储</div><div class="big">1.24<small>GB · 本机</small></div>
+      <dl class="kv"><dt>原文</dt><dd>1.08 GB</dd><dt>摘要与版本</dt><dd>0.16 GB</dd><dt>完整性校验</dt><dd class="s-ok">今天 02:05 通过</dd></dl></div>
+  </div>
+</section>
+
+<!-- TASKS -->
+<section class="view" id="tasks">
+  <div class="dayhead"><h1>任务<span>定时生成摘要与备份</span></h1></div>
+  <div class="card ruler" style="margin-bottom:16px">
+    <h2 style="font-size:15px">一天的节奏</h2>
+    <div class="rl" id="rl"></div>
+  </div>
+  <div class="card jobs" style="margin-bottom:16px"><div class="card-h"><h2>定时任务</h2><span class="sub">时间可调整</span></div>
+    <table><tr><th></th><th>任务</th><th>做什么</th><th>时间</th><th>上次</th><th></th></tr>
+    <tr><td><span class="sw"></span></td><td>小时摘要</td><td>只更新刚结束的那个小时</td><td><span class="sched">每小时 :05</span></td><td>20:05 <span class="s-ok">成功</span></td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>日结</td><td>生成日结，增量更新本周和本月</td><td><span class="sched">每天 20:30</span></td><td>20:30 <span class="s-ok">成功</span></td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>补跑</td><td>日结后又有工作时次日补上，周期结束时收尾</td><td><span class="sched">每天 00:30</span></td><td>00:30 跳过</td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>年摘要</td><td>并入上个月</td><td><span class="sched">每月 1 日 03:00</span></td><td>10/1 <span class="s-ok">成功</span></td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>IM 备份</td><td>客户端只留 7 天</td><td><span class="sched">每天 02:00</span></td><td>02:00 <span class="s-ok">成功</span></td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>日程备份</td><td>全部日程</td><td><span class="sched">每天 02:00</span></td><td>02:00 <span class="s-ok">成功</span></td><td class="run">运行</td></tr>
+    <tr><td><span class="sw"></span></td><td>邮件备份</td><td>客户端留 3 个月</td><td><span class="sched">每周日 03:00</span></td><td>10/25 <span class="s-ok">成功</span></td><td class="run">运行</td></tr></table></div>
+</section>
+</main>
+
+<div class="mask" onclick="document.body.classList.remove('dr')"></div>
+<aside class="drawer">
+  <div class="dr-h">
+    <button class="x" onclick="document.body.classList.remove('dr')">×</button>
+    <div class="where">本月至今 · v16 · 第 1 条</div>
+    <h2>完成数据中台指标口径统一</h2>
+    <div class="path"><span>本月</span>›<span>日结</span>›<span>小时摘要</span>›<span class="on">原文</span></div>
+  </div>
+  <div class="dr-b">
+    <div class="stat"><span><b>3</b>份日结</span><span><b>2</b>条原文</span><span><b>1</b>封邮件</span><span class="w"><b>1</b>处降级</span></div>
+    <div class="node"><div class="d"><b>10/09</b>日结</div><div class="s">口径初稿评审，以财务口径为基准</div>
+      <div class="sub-node"><div class="lab">15:00 小时摘要 · 数据中台周会</div>
+        <div class="msg"><span class="av">李</span><div><div class="who"><b>李敏</b>15:12</div>口径就按财务那版来</div><span class="tag">原文</span></div>
+        <div class="msg"><span class="av me">我</span><div><div class="who"><b>我</b>15:14</div>好，我同步给王总</div><span class="tag">原文</span></div>
+      </div></div>
+    <div class="node"><div class="d"><b>10/13</b>日结</div><div class="s">23 个指标统一按财务口径</div>
+      <div class="lost"><div class="h">⚠ 原文已丢失 · 降级为 AI 当时概述</div>与李敏、周婷确认 23 个指标统一按财务口径，周五发布。<div class="m">16:00 小时摘要 · 生成于 10/13 17:05<br>10/13 IM 备份失败，原消息已过 7 天保留期</div></div></div>
+    <div class="node" style="border-color:transparent"><div class="d"><b>10/21</b>日结</div><div class="s">口径 v1.0 正式发布</div>
+      <div class="sub-node mail"><span class="ic">✉</span><div><div style="font-weight:600">《数据中台指标口径 v1.0 发布》</div><div class="who" style="font-size:12px;color:var(--ink-3)">周婷 → 我 · 10/21 10:03</div></div><span class="tag">原文</span></div></div>
+  </div>
+  <div class="dr-f"><button class="btn">本条历史版本</button><button class="btn pri">查看原文上下文</button></div>
+</aside>
+
+<script>
+document.querySelectorAll('.tabs button[data-v]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));});
+document.querySelectorAll('[data-d]').forEach(e=>e.onclick=()=>document.body.classList.add('dr'));
+const c=document.getElementById('cells');for(let i=0;i<60;i++){const x=document.createElement('i');if(i>=42&&i<=44)x.className='x';if(i>=53)x.className='w';c.appendChild(x)}
+const rl=document.getElementById('rl');let h='<div class="axis"></div>';
+for(let i=0;i<=24;i++){const p=i/24*100;h+=`<div class="tick" style="left:${p}%"></div>`;if(i%3==0)h+=`<div class="tl2" style="left:${p}%">${String(i).padStart(2,'0')}</div>`}
+for(let i=0;i<24;i++)h+=`<div class="hs" style="left:${(i+5/60)/24*100}%"></div>`;
+[[0.5,'00:30 补跑'],[2,'02:00 备份'],[20.5,'20:30 日结 → 周 · 月']].forEach(([t,l],k)=>h+=`<div class="ev${k==2?' a':''}" style="left:${t/24*100}%">${l}</div>`);
+h+=`<div class="nowl" style="left:${(20+36/60)/24*100}%"></div>`;rl.innerHTML=h;
+{const v=new URLSearchParams(location.search).get('v');if(v)if(v==='drawer')document.body.classList.add('dr');else document.querySelector(`.tabs button[data-v=${v}]`)?.click()}
+</script>
+</body>
+</html>

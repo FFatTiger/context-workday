@@ -1,0 +1,60 @@
+{
+  "name": "context-workday",
+  "version": "0.1.0",
+  "description": "Context · 工作日镜：本机备份工作原文，按小时/日/周/月/年生成可溯源的摘要",
+  "type": "module",
+  "bin": {
+    "context-workday": "dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "docs/intranet.md",
+    "examples",
+    "src/source/types.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build:web && npm run build:server",
+    "build:web": "vite build",
+    "build:server": "node scripts/build-server.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "test": "vitest run",
+    "pack:intranet": "npm run build && npm pack"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
+    "hono": "^4.13.16",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "license": "MIT",
+  "author": "FFatTiger",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FFatTiger/context-workday.git"
+  },
+  "homepage": "https://github.com/FFatTiger/context-workday#readme",
+  "keywords": [
+    "work-log",
+    "summary",
+    "llm",
+    "im",
+    "timeline",
+    "evidence",
+    "sqlite"
+  ]
+}

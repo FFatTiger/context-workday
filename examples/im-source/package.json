@@ -1,0 +1,7 @@
+{
+  "name": "context-im-source",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {}
+}
